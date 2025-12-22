@@ -1,0 +1,18 @@
+{
+  "name": "cc-provide",
+  "description": "Provi's Claude Code plugins",
+  "owner": {
+    "name": "pro-vi"
+  },
+  "plugins": [
+    {
+      "name": "cc-iching",
+      "source": "./cc-iching",
+      "version": "1.0.0",
+      "description": "Daily I Ching divination with authentic 3-coin casting and true entropy",
+      "author": { "name": "pro-vi" },
+      "license": "MIT",
+      "keywords": ["i-ching", "divination", "hook"]
+    }
+  ]
+}

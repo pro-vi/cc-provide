@@ -1,0 +1,11 @@
+{
+  "name": "cc-iching",
+  "version": "1.0.0",
+  "description": "Daily I Ching divination with authentic 3-coin casting and true entropy",
+  "author": {
+    "name": "pro-vi"
+  },
+  "license": "MIT",
+  "keywords": ["i-ching", "divination", "hook"],
+  "hooks": "./hooks/hooks.json"
+}
