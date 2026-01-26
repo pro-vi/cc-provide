@@ -15,9 +15,9 @@ I built this simple hook as an attempt to demonstrate the I Ching's binary natur
 - **Authentic casting**: Uses `crypto.randomBytes()` for OS-level entropy (hardware noise, interrupt timing)
 - **Daily hexagram**: One cast per day, cached locally, with a historic log of past readings
 - **5 commentary styles**: 大象傳, 彖傳, each with English translations, and a Wilhelm-inspired interpretation (experimental)
-- **4 derived hexagrams**: 互卦 (nuclear), 錯卦 (shadow), 綜卦 (mirror), 之卦 (becoming)
-- **Progressive reveal**: 30% chance to show commentary or derived hexagrams on subsequent prompts
-- **Non-spammy**: 70% of prompts are silent after the first reading
+- **5 derived hexagrams**: 互卦 (nuclear), 錯卦 (polarity), 綜卦 (mirror), 之卦 (becoming), 對角卦 (diagonal)
+- **Progressive reveal**: ~32.5% chance to show commentary or derived hexagrams on subsequent prompts
+- **Non-spammy**: ~67.5% of prompts are silent after the first reading
 - **Culturally grounded**: Traditional casting method with scholarly translations
 
 ## Installation
@@ -27,7 +27,7 @@ I built this simple hook as an attempt to demonstrate the I Ching's binary natur
 Requires [Bun](https://bun.sh/) runtime (`brew install bun`).
 
 ```bash
-/plugin marketplace add pro-vi/cc-provide
+/plugin marketplace add pro-vi/cc-iching
 /plugin install cc-iching
 ```
 
@@ -78,21 +78,22 @@ Uses the `UserPromptSubmit` hook (exit 0). Output appears as a system reminder b
 ䷶ 豐 (Fēng) — Thunder and lightning arrive together; the noble one decides cases and applies consequences → ䷣ 明夷 [4]
 ```
 
-**Sample subsequent prompts (30% chance):**
+**Sample subsequent prompts (32.5% chance):**
 
 ```
 互卦 (hidden within) ䷼ 中孚 (Zhōng Fú) — Wind above the lake; the noble one deliberates on cases and delays executions
-錯卦 (shadow) ䷺ 渙 (Huàn) — Wind moves over water; the ancient kings made offerings and established temples
+錯卦 (polarity) ䷺ 渙 (Huàn) — Wind moves over water; the ancient kings made offerings and established temples
 綜卦 (mirror) ䷷ 旅 (Lǚ) — Fire upon the mountain; the noble one applies consequences wisely, resolves matters swiftly
 綜卦 (自綜) ䷀ 乾 (Qián) — Heaven moves with vigor; the noble one strives ceaselessly
 之卦 (becoming) ䷣ 明夷 (Míng Yí) — Brightness enters the earth; the noble one governs by concealing brilliance within
+對角卦 (diagonal) ䷋ 否 (Pǐ) — Heaven and earth do not unite; the noble one withdraws into frugal virtue
 ```
 
 ## Progressive Reveal
 
 **First prompt each day:** Full reading with 大象傳 (Image commentary)
 
-**Subsequent prompts:** 30% chance of showing one of the following:
+**Subsequent prompts:** ~32.5% chance of showing one of the following:
 
 | Type        | Description                          | Chance |
 | ----------- | ------------------------------------ | ------ |
@@ -102,11 +103,12 @@ Uses the `UserPromptSubmit` hook (exit 0). Output appears as a system reminder b
 | 彖傳 (te)   | Judgment commentary (English)        | 4%     |
 | Wilhelm (w) | Wilhelm/Jung inspired interpretation | 4%     |
 | 互卦        | Nuclear hexagram (hidden within)     | 2.5%   |
-| 錯卦        | Shadow hexagram (opposite path)      | 2.5%   |
+| 錯卦        | Polarity hexagram (all lines inverted) | 2.5%   |
 | 綜卦        | Mirror hexagram (reversed view)      | 2.5%   |
 | 之卦        | Becoming hexagram (transformation)   | 2.5%   |
+| 對角卦      | Diagonal hexagram (錯+綜 combined)   | 2.5%   |
 
-70% of prompts remain silent after the initial reading.
+67.5% of prompts remain silent after the initial reading.
 
 ## How It Works
 
@@ -147,9 +149,10 @@ When a reading pops up that piques my interest, I open a new Claude Code session
 - **Primary hexagram** — the situation as it appears
 - **Changing lines** — where the energy is active
 - **互卦 (hidden within)** — what's gestating inside
-- **錯卦 (shadow)** — what I should be aware of
+- **錯卦 (polarity)** — the complementary opposite
 - **綜卦 (mirror)** — how others might see it
 - **之卦 (becoming)** — where it's heading
+- **對角卦 (diagonal)** — the furthest point, 錯+綜 combined
 
 I particularly appreciated how the complete array of derived hexagrams, when viewed together, synthesized, illuminated both outer conditions and inner experience with remarkable intensity and nuance.
 
@@ -158,6 +161,8 @@ The hook is non-spammy by design as most prompts are silent. When a reading appe
 ## Roadmap
 
 - [x] **自綜 self-mirroring detection** — 8 hexagrams are vertically symmetric and therefore self-mirroring. Identify and label accordingly.
+- [x] **错综同象 locked pairs** — 4 hexagram pairs where 綜卦 = 錯卦 (泰/否, 隨/蠱, 漸/歸妹, 既濟/未濟). Detected and labeled.
+- [x] **對角卦 diagonal hexagram** — 錯+綜 combined, the furthest point in the transformation square. Special cases for self-mirroring (diagonal = polarity) and locked pairs (diagonal = self, 自返).
 - [ ] **相綜 pair descriptions** — The 28 hexagram pairs represent opposite perspectives on the same situation. Understanding the pairing adds depth to mirror hexagram readings.
 - [ ] **互卦 trigram breakdown** — Show the inner/outer trigrams that form the nuclear hexagram. The inner trigram reflects the internal landscape, the outer shows the external situation.
 - [ ] **爻辭 line texts** — Specific counsel for each changing line. When lines transform, these texts address exactly where and how the energy is moving.

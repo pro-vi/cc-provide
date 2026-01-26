@@ -64,18 +64,20 @@ interface Cast {
   becoming: number | null
   changingPositions: number[]
   nuclear: number
-  shadow: number
+  polarity: number
   mirror: number
+  diagonal: number
 }
 
 /**
  * Derived hexagram types:
  * - nuclear (互卦): hidden within
- * - shadow (錯卦): the rejected path
+ * - polarity (錯卦): complementary opposite
  * - mirror (綜卦): opposite vantage
  * - becoming (之卦): where it's heading
+ * - diagonal (對角卦): 錯+綜 combined — the furthest point
  */
-type DerivedType = "nuclear" | "shadow" | "mirror" | "becoming"
+type DerivedType = "nuclear" | "polarity" | "mirror" | "becoming" | "diagonal"
 
 /** Cache structure for daily reading */
 interface DailyCache {
@@ -157,8 +159,9 @@ function castHexagram(): Cast {
     becoming,
     changingPositions,
     nuclear: nuclear(lines),
-    shadow: shadow(lines),
+    polarity: polarity(lines),
     mirror: mirror(lines),
+    diagonal: diagonal(lines),
   }
 }
 
@@ -179,8 +182,8 @@ function nuclear(lines: Line[]): number {
   return BINARY_TO_KW[linesToBinary(nuclearLines)]
 }
 
-/** 錯卦 — Invert all lines (yang↔yin) */
-function shadow(lines: Line[]): number {
+/** 錯卦 — Invert all lines (yang↔yin) — complementary opposite */
+function polarity(lines: Line[]): number {
   const inverted = lines.map((l) => ({ ...l, isYang: !l.isYang }))
   return BINARY_TO_KW[linesToBinary(inverted)]
 }
@@ -188,6 +191,17 @@ function shadow(lines: Line[]): number {
 /** 綜卦 — Flip line order (1↔6, 2↔5, 3↔4) */
 function mirror(lines: Line[]): number {
   return BINARY_TO_KW[linesToBinary([...lines].reverse())]
+}
+
+/** 對角卦 — Invert all lines then reverse (錯+綜 combined) — the furthest point */
+function diagonal(lines: Line[]): number {
+  const inverted = lines.map((l) => ({ ...l, isYang: !l.isYang }))
+  return BINARY_TO_KW[linesToBinary([...inverted].reverse())]
+}
+
+/** 错综同象 — Locked pairs where mirror === polarity (only 4 pairs: 泰/否, 隨/蠱, 漸/歸妹, 既濟/未濟) */
+function isLockedPair(cast: Cast): boolean {
+  return cast.mirror === cast.polarity
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -233,12 +247,35 @@ function formatDerived(cast: Cast, type: DerivedType): string {
     return `綜卦 (${tag}) ${g.u} ${g.n} (${g.p}) — ${g[getRandomStyle()]}`
   }
 
+  // 错综同象: locked pairs where mirror === polarity
+  if ((type === "mirror" || type === "polarity") && isLockedPair(cast)) {
+    const g = GUA[cast.mirror - 1]
+    return `错综同象 ${g.u} ${g.n} (${g.p}) — ${g[getRandomStyle()]}`
+  }
+
+  // 對角卦 special cases
+  if (type === "diagonal") {
+    // Self-mirroring: diagonal = polarity (no distinct 4th point)
+    if (cast.mirror === cast.primary) {
+      const g = GUA[cast.polarity - 1]
+      return `對角卦 = 錯卦 (自綜) ${g.u} ${g.n} (${g.p}) — ${g[getRandomStyle()]}`
+    }
+    // Locked pairs: diagonal = self (自返)
+    if (isLockedPair(cast)) {
+      const g = GUA[cast.primary - 1]
+      return `對角卦 = ${g.n} (自返) ${g.u} ${g.n} (${g.p}) — ${g[getRandomStyle()]}`
+    }
+  }
+
   const kwNum = type === "becoming" ? cast.becoming : cast[type]
   if (kwNum === null) return ""
   const g = GUA[kwNum - 1]
-  return `${DERIVED_LABELS[type]} ${g.u} ${g.n} (${g.p}) — ${
-    g[getRandomStyle()]
-  }`
+
+  // 50% chance for 来知德 Chinese variant labels
+  const useChinese = randomBytes(1)[0] < 128
+  const label = useChinese ? DERIVED_LABELS_CN[type] : DERIVED_LABELS[type]
+
+  return `${label} ${g.u} ${g.n} (${g.p}) — ${g[getRandomStyle()]}`
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -285,12 +322,13 @@ async function main() {
       else if (r < 0.16) out = formatReading(cache.cast, "te")
       else if (r < 0.2) out = formatReading(cache.cast, "w")
       else if (r < 0.225) out = formatDerived(cache.cast, "nuclear")
-      else if (r < 0.25) out = formatDerived(cache.cast, "shadow")
+      else if (r < 0.25) out = formatDerived(cache.cast, "polarity")
       else if (r < 0.275) out = formatDerived(cache.cast, "mirror")
       else if (r < 0.3) {
         const t = formatDerived(cache.cast, "becoming")
         if (t) out = t
       }
+      else if (r < 0.325) out = formatDerived(cache.cast, "diagonal")
     }
 
     await Bun.write(CACHE, JSON.stringify(cache))
@@ -311,9 +349,19 @@ const STYLES: Style[] = ["dx", "tu", "en", "te", "w"]
 
 const DERIVED_LABELS: Record<DerivedType, string> = {
   nuclear: "互卦 (hidden within)",
-  shadow: "錯卦 (shadow)",
+  polarity: "錯卦 (polarity)",
   mirror: "綜卦 (mirror)",
   becoming: "之卦 (becoming)",
+  diagonal: "對角卦 (diagonal)",
+}
+
+/** 来知德 framework labels — Chinese variants (50% chance) */
+const DERIVED_LABELS_CN: Record<DerivedType, string> = {
+  nuclear: "互卦 (潜藏轨迹)",
+  polarity: "錯卦 (矛盾调和)",
+  mirror: "綜卦 (表里)",
+  becoming: "之卦 (所往)",
+  diagonal: "對角卦 (極反)",
 }
 
 /**
